@@ -38,6 +38,9 @@ class PixelDescriptionEvaluator:
             image_path: Path to the image file referenced in the descriptions.
             output_dir: Directory to save the evaluation results. Defaults to 'output'.
         """
+        # Flag to track if comparison is shown
+        self.comparison_shown = False
+
         # Load the JSON data
         with open(json_path, 'r') as f:
             self.data = json.load(f)
@@ -169,9 +172,27 @@ class PixelDescriptionEvaluator:
         self.root.bind('<equal>', lambda e: self.zoom_in())
         self.root.bind('<minus>', lambda e: self.zoom_out())
         self.root.bind('<Escape>', lambda e: self.on_closing())
+        self.root.bind('<Return>', self.handle_enter_key)
+
+        # Store the current guess
+        self.current_guess = None
+        self.current_distance = None
 
         # Start the evaluation with the first description
         self.update_display()
+
+    def handle_enter_key(self, event=None) -> None:
+        """Handle the Enter key press based on the current state.
+
+        If user has made a guess but not confirmed, confirm the guess.
+        If the comparison is shown, move to the next description.
+        """
+        if self.comparison_shown:
+            # If we're already showing the comparison, move to next description
+            self.next_description()
+        elif self.current_guess is not None:
+            # If we have a guess but haven't confirmed, confirm it
+            self.confirm_guess()
 
     def update_display(self) -> None:
         """Update the image display and description text."""
@@ -209,6 +230,15 @@ class PixelDescriptionEvaluator:
         self.scaled_height = int(self.height * self.scale_factor)
         self.root.geometry(f'{self.scaled_width + 40}x{self.scaled_height + 200}')
 
+        # Reset current guess and comparison flag
+        self.current_guess = None
+        self.current_distance = None
+        self.comparison_shown = False
+
+        # Remove confirm button if it exists
+        if hasattr(self, 'confirm_button') and self.confirm_button.winfo_exists():
+            self.confirm_button.destroy()
+
     def handle_click(self, event: tk.Event) -> None:
         """Handle mouse click on the image to record the guessed pixel location.
 
@@ -226,22 +256,113 @@ class PixelDescriptionEvaluator:
         original_x = max(0, min(original_x, self.width - 1))
         original_y = max(0, min(original_y, self.height - 1))
 
+        # If there's already a current guess, automatically undo it
+        if self.current_guess is not None:
+            # Remove confirm button if it exists
+            if hasattr(self, 'confirm_button'):
+                self.confirm_button.destroy()
+
+            # Reset the display to original image (will be updated with new guess below)
+            image_copy = self.original_image.copy()
+            scaled_image = image_copy.resize(
+                (
+                    int(self.width * self.scale_factor),
+                    int(self.height * self.scale_factor)
+                ),
+                Image.Resampling.LANCZOS
+            )
+            self.photo_image = ImageTk.PhotoImage(scaled_image)
+            self.image_label.configure(image=self.photo_image)
+
+        # Store the current guess
+        self.current_guess = (original_x, original_y)
+
         # Get the true location for this pixel
         true_location = tuple(self.pixel_data[self.current_index]['pixel_position'])
 
         # Calculate the L2 distance (Euclidean distance)
-        distance = math.sqrt(
+        self.current_distance = math.sqrt(
             (original_x - true_location[0])**2 +
             (original_y - true_location[1])**2
         )
 
-        # Store the guess and distance
-        self.guesses.append((original_x, original_y))
-        self.distances.append(distance)
+        # Show only the user's guess first
+        self.show_guess(self.current_guess)
 
-        # Show the true location and the guessed location
-        self.show_comparison(true_location, (original_x, original_y), distance)
+        # Enable undo button
         self.undo_button.configure(state='normal')
+
+    def show_guess(self, guess_loc: Tuple[int, int]) -> None:
+        """Show just the user's guess on the image.
+
+        Args:
+            guess_loc: The guessed pixel coordinates (x, y).
+        """
+        # Create a copy of the original image
+        image_copy = self.original_image.copy()
+        draw = ImageDraw.Draw(image_copy)
+
+        # Draw the guessed location as a blue dot
+        marker_radius = max(5, int(self.scale_factor * 3))
+        draw.ellipse(
+            [(guess_loc[0] - marker_radius, guess_loc[1] - marker_radius),
+             (guess_loc[0] + marker_radius, guess_loc[1] + marker_radius)],
+            fill='blue',
+            outline='white'
+        )
+
+        # Resize the image according to scale factor
+        scaled_image = image_copy.resize(
+            (int(self.width * self.scale_factor),
+             int(self.height * self.scale_factor)),
+            Image.Resampling.LANCZOS
+        )
+
+        # Convert to PhotoImage and update the label
+        self.photo_image = ImageTk.PhotoImage(scaled_image)
+        self.image_label.configure(image=self.photo_image)
+
+        # Update status bar
+        self.status_bar.configure(
+            text="Click again to change your guess, or press Enter or click 'Confirm Guess' to see the correct answer."
+        )
+
+        # Keep click event bound for changing the guess
+        # self.image_label.unbind('<Button-1>')  - Removed this line to allow clicking again
+
+        # Add a confirm button if it doesn't already exist
+        if not hasattr(self, 'confirm_button') or not self.confirm_button.winfo_exists():
+            self.confirm_button = ttk.Button(
+                self.control_frame,
+                text='Confirm Guess',
+                command=self.confirm_guess
+            )
+            self.confirm_button.pack(pady=10)
+
+    def confirm_guess(self) -> None:
+        """Confirm the user's guess and display the true location."""
+        if not self.current_guess:
+            return
+
+        # Remove the confirm button if it exists
+        if hasattr(self, 'confirm_button'):
+            self.confirm_button.destroy()
+
+        # Store the guess and distance
+        self.guesses.append(self.current_guess)
+        self.distances.append(self.current_distance)
+
+        # Get the true location
+        true_location = tuple(self.pixel_data[self.current_index]['pixel_position'])
+
+        # Disable the undo button after confirmation
+        self.undo_button.configure(state='disabled')
+
+        # Unbind click event to prevent further guesses
+        self.image_label.unbind('<Button-1>')
+
+        # Show the comparison
+        self.show_comparison(true_location, self.current_guess, self.current_distance)
 
     def show_comparison(self, true_loc: Tuple[int, int], guess_loc: Tuple[int, int], distance: float) -> None:
         """Show a comparison between the true location and the guessed location.
@@ -288,11 +409,15 @@ class PixelDescriptionEvaluator:
 
         # Update status bar with the distance
         self.status_bar.configure(
-            text=f"Your guess was {distance:.2f} pixels away from the true location. Click 'Next' to continue."
+            text=f"Your guess was {distance:.2f} pixels away from the true location. Press Enter or click 'Next' to continue."
         )
 
-        # Replace the image click binding with the next button
-        self.image_label.unbind('<Button-1>')
+        # Set a flag to indicate we're in the comparison state
+        self.comparison_shown = True
+
+        # Remove any existing next button
+        if hasattr(self, 'next_button'):
+            self.next_button.destroy()
 
         # Add a 'Next' button to continue
         self.next_button = ttk.Button(
@@ -307,6 +432,9 @@ class PixelDescriptionEvaluator:
         # Remove the next button
         if hasattr(self, 'next_button'):
             self.next_button.destroy()
+
+        # Reset comparison flag
+        self.comparison_shown = False
 
         # Move to the next index
         self.current_index += 1
@@ -326,22 +454,27 @@ class PixelDescriptionEvaluator:
 
     def undo_last_guess(self) -> None:
         """Allow the user to undo their last guess and try again."""
-        # Only allow undo before moving to next description
-        if hasattr(self, 'next_button'):
-            messagebox.showinfo('Cannot Undo', 'Cannot undo after viewing the true location.')
-            return
+        # Remove any confirm button if it exists
+        if hasattr(self, 'confirm_button'):
+            self.confirm_button.destroy()
 
-        if self.guesses:
-            # Remove the last guess and distance
-            self.guesses.pop()
-            self.distances.pop()
+        # Reset current guess
+        self.current_guess = None
+        self.current_distance = None
 
-            # Update the display
-            self.update_display()
-            self.status_bar.configure(
-                text='Previous guess removed. Click on the image again.'
-            )
-            self.undo_button.configure(state='disabled')
+        # Update the display to the original image
+        self.update_display()
+
+        # Rebind the click event
+        self.image_label.bind('<Button-1>', self.handle_click)
+
+        # Update status bar
+        self.status_bar.configure(
+            text='Previous guess removed. Click on the image again.'
+        )
+
+        # Disable undo button
+        self.undo_button.configure(state='disabled')
 
     def zoom_in(self) -> None:
         """Increase the zoom level."""
