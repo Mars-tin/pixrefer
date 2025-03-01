@@ -6,7 +6,7 @@ Users are asked to provide textual descriptions of these marked pixels.
 The descriptions are collected and saved to a JSON file for later use.
 
 Usage:
-    python interface_reg.py path/to/image.jpg [--num_pixels 3] [--output_dir collected_descriptions]
+    python interface_reg.py path/to/image.jpg [--num_pixels 3] [--output_dir output] [--scale 1.5]
 """
 
 import argparse
@@ -29,14 +29,14 @@ class PixelDescriptionCollector:
     of each marked pixel and collects these descriptions for later use.
     """
 
-    def __init__(self, image_path: str, num_pixels: int = 20, output_dir: str = 'collected_descriptions',
+    def __init__(self, image_path: str, num_pixels: int = 20, output_dir: str = 'output',
                  initial_scale: float = 1.0) -> None:
         """Initialize PixelDescriptionCollector with image and collection parameters.
 
         Args:
             image_path: Path to the image file to be used.
             num_pixels: Number of pixel descriptions to collect. Defaults to 20.
-            output_dir: Directory to save the collected descriptions. Defaults to 'collected_descriptions'.
+            output_dir: Directory to save the collected descriptions. Defaults to 'output'.
             initial_scale: Initial scale factor for the display. Defaults to 1.0.
         """
         # Load the image using PIL
@@ -278,7 +278,7 @@ class PixelDescriptionCollector:
         and their corresponding descriptions.
         """
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-        filename = f'{self.output_dir}/pixel_descriptions_{self.image_name}_{timestamp}.json'
+        filename = f'{self.output_dir}/reg_{self.image_name[:-4]}_{timestamp}.json'
 
         data: Dict[str, Any] = {
             'image_path': self.image_path,
@@ -315,7 +315,7 @@ def main() -> None:
     the provided parameters.
     """
     parser = argparse.ArgumentParser(description='Collect referring expressions of pixel locations.')
-    parser.add_argument('--image_path', type=str, default='./images/example.jpg',
+    parser.add_argument('--image_path', type=str, default='./example/example.jpg',
                         help='Path to the image file')
     parser.add_argument('--num_pixels', type=int, default=3,
                         help='Number of pixels to collect descriptions for (default: 3)')
