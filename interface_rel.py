@@ -365,7 +365,7 @@ class PixelDescriptionEvaluator:
         max_distance = max(self.distances) if self.distances else 0
         min_distance = min(self.distances) if self.distances else 0
         
-        # Count "accurate" guesses (within 20 pixels)
+        # Count "accurate" guesses (within 50 pixels)
         accurate_guesses = sum(1 for dist in self.distances if dist <= 20)
         accuracy_rate = accurate_guesses / len(self.distances) if self.distances else 0
         
@@ -405,8 +405,8 @@ class PixelDescriptionEvaluator:
         max_distance = max(self.distances) if self.distances else 0
         min_distance = min(self.distances) if self.distances else 0
         
-        # Count "accurate" guesses (within 20 pixels)
-        accurate_guesses = sum(1 for dist in self.distances if dist <= 20)
+        # Count "accurate" guesses (within 50 pixels)
+        accurate_guesses = sum(1 for dist in self.distances if dist <= 50)
         accuracy_rate = accurate_guesses / len(self.distances) if self.distances else 0
         
         # Create a new window for results
@@ -446,7 +446,7 @@ class PixelDescriptionEvaluator:
         results_text.insert(tk.END, f"Average distance: {average_distance:.2f} pixels\n")
         results_text.insert(tk.END, f"Maximum distance: {max_distance:.2f} pixels\n")
         results_text.insert(tk.END, f"Minimum distance: {min_distance:.2f} pixels\n\n")
-        results_text.insert(tk.END, f"Accurate guesses (within 20 pixels): {accurate_guesses}\n")
+        results_text.insert(tk.END, f"Accurate guesses (within 50 pixels): {accurate_guesses}\n")
         results_text.insert(tk.END, f"Accuracy rate: {accuracy_rate:.2%}\n\n")
         results_text.insert(tk.END, f"Results saved to:\n{self.results_filename}\n")
         

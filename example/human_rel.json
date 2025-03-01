@@ -9,8 +9,8 @@
     "average_distance": 34.0371230916812,
     "max_distance": 41.43669871020132,
     "min_distance": 26.019223662515376,
-    "accuracy_rate": 0.0,
-    "accurate_guesses": 0,
+    "accuracy_rate": 1.0,
+    "accurate_guesses": 3,
     "total_guesses": 3
   },
   "evaluation_data": [
