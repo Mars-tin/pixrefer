@@ -9,6 +9,8 @@ output/
 
 # Development software files
 .vscode/
+.venv/
+.idea/
 
 # User-specific files
 *.rsuser
