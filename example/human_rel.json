@@ -1,6 +1,6 @@
 {
-  "image_path": "./example/example.jpg",
-  "json_path": "./example/gpt4o_reg.json",
+  "image_path": "./example.jpg",
+  "json_path": "./gpt4o_reg.json",
   "image_dimensions": [
     480,
     640
