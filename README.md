@@ -46,6 +46,8 @@ Replace the following path with your given data:
 --json_path Pixrefer_data/data/rel_user_input/gpt4o_concise_results.json
 ```
 
+For each image, you are require to click where you think the object in the red box (you cannot see it) is located. If you cannot tell where the object is, click ``
+
 #### REG task
 ```bash
 bash pixrefer/interface/run_reg.sh
