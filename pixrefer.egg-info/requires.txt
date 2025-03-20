@@ -1,5 +1,0 @@
-numpy
-matplotlib
-pillow
-openai
-pyyaml

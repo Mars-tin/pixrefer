@@ -107,6 +107,10 @@ class MaskDescriptionEvaluator(BaseInterface):
         self.current_distance = None
         self.current_in_mask = 0
         
+        # Add new flags to record "cannot tell" and "multiple match" status
+        self.cannot_tell = 0
+        self.multiple_match = 0
+        
         # Start the evaluation
         self.update_display()
 
@@ -115,7 +119,7 @@ class MaskDescriptionEvaluator(BaseInterface):
         # Add instruction label
         self.instruction_label = ttk.Label(
             self.control_frame,
-            text='Read the description below and click on the image where you think the object is located:',
+            text='Read the description below and click on the image where you think the object in the red box (you cannot see the red box) is located. Or select one of the special options.',
             wraplength=0  # Set to 0 to auto-adjust text to control panel width
         )
         self.instruction_label.pack(anchor=tk.W if not self.is_portrait else tk.CENTER, pady=(5, 0), fill=tk.X)
@@ -127,6 +131,31 @@ class MaskDescriptionEvaluator(BaseInterface):
             text_height = 5 
         self._add_text_display(height=text_height, readonly=True)
         self.description_display = self.text_display  # Alias for backward compatibility
+        
+        # Add special buttons frame
+        self.special_button_frame = ttk.Frame(self.control_frame)
+        self.special_button_frame.pack(fill=tk.X, pady=5)
+        
+        # Add "cannot tell" and "multiple match" buttons
+        self.cannot_tell_button = ttk.Button(
+            self.special_button_frame,
+            text='Cannot Tell Where The Object Is',
+            command=self.handle_cannot_tell
+        )
+        
+        self.multiple_match_button = ttk.Button(
+            self.special_button_frame,
+            text='Multiple Match',
+            command=self.handle_multiple_match
+        )
+        
+        # Arrange buttons based on interface orientation
+        if self.is_portrait:
+            self.cannot_tell_button.pack(anchor=tk.CENTER, pady=5, fill=tk.X)
+            self.multiple_match_button.pack(anchor=tk.CENTER, pady=5, fill=tk.X)
+        else:
+            self.cannot_tell_button.pack(side=tk.LEFT, padx=(0, 5), fill=tk.X, expand=True)
+            self.multiple_match_button.pack(side=tk.RIGHT, padx=(5, 0), fill=tk.X, expand=True)
         
         # Add zoom controls using base class method
         self._add_zoom_controls()
@@ -152,7 +181,7 @@ class MaskDescriptionEvaluator(BaseInterface):
         self.button_frame.pack_forget()
 
         # Update status bar text
-        self.update_status('Click on the image where you think the described object is located.')
+        self.update_status('Click on the image where you think the described object is located, or select one of the special options.')
 
     def handle_enter_key(self, event: Optional[tk.Event] = None) -> None:
         """Handle the Enter key press based on the current state.
@@ -187,6 +216,11 @@ class MaskDescriptionEvaluator(BaseInterface):
         self.current_guess = None
         self.current_distance = None
         self.current_in_mask = 0
+        
+        # Reset special flags
+        self.cannot_tell = 0
+        self.multiple_match = 0
+        
         self.comparison_shown = False
 
         # Load the current mask for evaluation
@@ -360,9 +394,47 @@ class MaskDescriptionEvaluator(BaseInterface):
         # Update status bar
         self.update_status("Click again to change your guess, or press Enter or click 'Confirm Guess' to see the correct answer.")
 
+    def handle_cannot_tell(self) -> None:
+        """Handle click on 'Cannot Tell Where The Object Is' button."""
+        # Reset any existing guesses
+        if self.current_guess is not None:
+            self.update_display()
+            
+        # Set flags
+        self.cannot_tell = 1
+        self.multiple_match = 0
+        self.current_guess = []  # Empty list indicates no specific location
+        self.current_distance = 0
+        self.current_in_mask = 0
+        
+        # Update status bar
+        self.update_status("You selected 'Cannot Tell Where The Object Is'. Press Enter or click 'Confirm Guess' to proceed.")
+        
+        # Show buttons
+        self._show_guess_buttons()
+    
+    def handle_multiple_match(self) -> None:
+        """Handle click on 'Multiple Match' button."""
+        # Reset any existing guesses
+        if self.current_guess is not None:
+            self.update_display()
+            
+        # Set flags
+        self.multiple_match = 1
+        self.cannot_tell = 0
+        self.current_guess = []  # Empty list indicates no specific location
+        self.current_distance = 0
+        self.current_in_mask = 0
+        
+        # Update status bar
+        self.update_status("You selected 'Multiple Match'. Press Enter or click 'Confirm Guess' to proceed.")
+        
+        # Show buttons
+        self._show_guess_buttons()
+
     def confirm_guess(self) -> None:
         """Confirm the user's guess and display the mask."""
-        if not self.current_guess:
+        if self.current_guess is None:
             return
 
         # Store the guess, distance, and mask status
@@ -406,40 +478,49 @@ class MaskDescriptionEvaluator(BaseInterface):
         # Composite the images
         image_copy = Image.alpha_composite(image_copy, mask_overlay)
         
-        # Draw on the composite image
-        draw = ImageDraw.Draw(image_copy)
-        
-        # Draw the guessed location as a blue dot
-        marker_radius = max(5, int(self.display_scale_factor * 3))
-        marker_color = 'blue'
-        
-        draw.ellipse(
-            [(guess_loc[0] - marker_radius, guess_loc[1] - marker_radius),
-             (guess_loc[0] + marker_radius, guess_loc[1] + marker_radius)],
-            fill=marker_color,
-            outline='white'
-        )
-        
-        # If not in mask, draw a line to the nearest mask point
-        if in_mask == 0 and distance < float('inf'):
-            # Find the nearest mask point
-            mask_indices = np.where(self.current_mask)
-            y_coords = mask_indices[0]
-            x_coords = mask_indices[1]
+        # Check if this is a special case
+        if self.cannot_tell or self.multiple_match:
+            # Directly show the mask overlay image without adding guess points or lines
+            pass
+        else:
+            # Handle regular guess point case
+            draw = ImageDraw.Draw(image_copy)
             
-            distances = np.sqrt((x_coords - guess_loc[0])**2 + (y_coords - guess_loc[1])**2)
-            nearest_idx = np.argmin(distances)
+            # Draw the guessed location as a blue dot
+            marker_radius = max(5, int(self.display_scale_factor * 3))
+            marker_color = 'blue'
             
-            nearest_point = (int(x_coords[nearest_idx]), int(y_coords[nearest_idx]))
+            draw.ellipse(
+                [(guess_loc[0] - marker_radius, guess_loc[1] - marker_radius),
+                 (guess_loc[0] + marker_radius, guess_loc[1] + marker_radius)],
+                fill=marker_color,
+                outline='white'
+            )
             
-            # Draw a line from the guess to the nearest mask point
-            draw.line([guess_loc, nearest_point], fill='red', width=2)
+            # If not in mask, draw a line to the nearest mask point
+            if in_mask == 0 and distance < float('inf'):
+                # Find the nearest mask point
+                mask_indices = np.where(self.current_mask)
+                y_coords = mask_indices[0]
+                x_coords = mask_indices[1]
+                
+                distances = np.sqrt((x_coords - guess_loc[0])**2 + (y_coords - guess_loc[1])**2)
+                nearest_idx = np.argmin(distances)
+                
+                nearest_point = (int(x_coords[nearest_idx]), int(y_coords[nearest_idx]))
+                
+                # Draw a line from the guess to the nearest mask point
+                draw.line([guess_loc, nearest_point], fill='red', width=2)
 
         # Update image display
         self.update_image_display(image_copy)
 
-        # Update status bar with the distance or hit message
-        if in_mask == 1:
+        # Update status bar message
+        if self.cannot_tell:
+            status_text = "You selected 'Cannot Tell Where The Object Is'. Press Enter or click 'Next' to continue."
+        elif self.multiple_match:
+            status_text = "You selected 'Multiple Match'. Press Enter or click 'Next' to continue."
+        elif in_mask == 1:
             status_text = "Your guess is inside the object! Press Enter or click 'Next' to continue."
         else:
             status_text = f"Your guess was {distance:.2f} pixels away from the object. Press Enter or click 'Next' to continue."
@@ -479,6 +560,10 @@ class MaskDescriptionEvaluator(BaseInterface):
         self.current_guess = None
         self.current_distance = None
         self.current_in_mask = 0
+        
+        # Reset special flags
+        self.cannot_tell = 0
+        self.multiple_match = 0
 
         # Update the display to the original image
         self.update_display()
@@ -500,9 +585,11 @@ class MaskDescriptionEvaluator(BaseInterface):
         filename = f'{self.output_dir}/mask_{mask_name}.json'
         
         eval_item = {
-            'guessed_position': [int(coord) for coord in self.guesses[0]],
+            'guessed_position': [int(coord) for coord in self.guesses[0]] if isinstance(self.guesses[0], tuple) else self.guesses[0],
             'distance': float(self.distances[0]),
-            'in_mask': int(self.in_mask[0])  # Already an int (0 or 1)
+            'in_mask': int(self.in_mask[0]),  # Already an int (0 or 1)
+            'cannot_tell': int(self.cannot_tell),  # New field
+            'multiple_match': int(self.multiple_match)  # New field
         }
         
         # Create results dictionary

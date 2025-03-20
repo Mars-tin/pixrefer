@@ -1,7 +1,0 @@
-README.md
-setup.py
-pixrefer.egg-info/PKG-INFO
-pixrefer.egg-info/SOURCES.txt
-pixrefer.egg-info/dependency_links.txt
-pixrefer.egg-info/requires.txt
-pixrefer.egg-info/top_level.txt

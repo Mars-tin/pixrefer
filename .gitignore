@@ -410,3 +410,23 @@ FodyWeavers.xsd
 
 # Environment variables
 .env
+
+# Python distribution / packaging
+*.egg-info/
+*.egg
+dist/
+build/
+develop-eggs/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.whl
+MANIFEST
+
+
