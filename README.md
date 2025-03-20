@@ -9,3 +9,24 @@ pre-commit install
 ```
 
 The pre-commit hooks will run automatically when you try to commit changes to the repository.
+
+
+
+## Quickstart
+
+```bash
+git clone https://github.com/Mars-tin/pixrefer.git
+cd pixrefer
+pip install -e .
+```
+
+## Launch the demo
+REG task:
+```bash
+bash pixrefer/interface/run_reg.sh
+```
+
+REL task:
+```bash
+bash pixrefer/interface/run_rel.sh
+```

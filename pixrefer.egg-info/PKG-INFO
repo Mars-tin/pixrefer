@@ -1,0 +1,15 @@
+Metadata-Version: 2.2
+Name: pixrefer
+Version: 0.1.0
+Summary: A package for annotating images with bounding boxes and generating descriptions using GPT models
+Author: Jing Ding
+Requires-Python: >=3.6
+Requires-Dist: numpy
+Requires-Dist: matplotlib
+Requires-Dist: pillow
+Requires-Dist: openai
+Requires-Dist: pyyaml
+Dynamic: author
+Dynamic: requires-dist
+Dynamic: requires-python
+Dynamic: summary

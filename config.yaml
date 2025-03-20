@@ -1,0 +1,6 @@
+api:
+  openai:
+    key: ${OPENAI_API_KEY}
+    model: gpt-4o
+  google:
+    key: ${GOOGLE_API_KEY}
