@@ -20,13 +20,19 @@ cd pixrefer
 pip install -e .
 ```
 
+If you are using a Mac, run the following code to install PyAudio:
+```bash
+brew install portaudio
+pip install pyaudio
+```
+
 ### Download the data
 ```bash
 git lfs install
 git clone https://huggingface.co/datasets/Seed42Lab/Pixrefer_data
 ```
-### Prepare the google key
 
+### Prepare the google key
 Create empty .env file:
 ```bash
 touch .env
