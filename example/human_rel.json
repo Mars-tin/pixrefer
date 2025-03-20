@@ -6,11 +6,11 @@
     640
   ],
   "statistics": {
-    "average_distance": 34.0371230916812,
-    "max_distance": 41.43669871020132,
-    "min_distance": 26.019223662515376,
-    "accuracy_rate": 1.0,
-    "accurate_guesses": 3,
+    "average_distance": 66.29210604059665,
+    "max_distance": 83.54639429682169,
+    "min_distance": 34.058772731852805,
+    "accuracy_rate": 0.3333333333333333,
+    "accurate_guesses": 1,
     "total_guesses": 3
   },
   "evaluation_data": [
@@ -21,10 +21,10 @@
         408
       ],
       "guessed_position": [
-        62,
-        402
+        98,
+        382
       ],
-      "distance": 41.43669871020132
+      "distance": 81.27115109311545
     },
     {
       "description": "The red pixel is located on the gray carpeted floor to the right of the tiered stand filled with colorful gelatin desserts. It is positioned near the bottom right quadrant of the image, a few inches away from the edge of the lowest wooden tier. The pixel contrasts against the neutral gray carpet, making it easier to spot.",
@@ -33,10 +33,10 @@
         549
       ],
       "guessed_position": [
-        420,
-        523
+        423,
+        515
       ],
-      "distance": 26.019223662515376
+      "distance": 34.058772731852805
     },
     {
       "description": "The red pixel is located on the second tier from the top of the tiered stand holding colorful gelatin desserts. It is positioned slightly to the left, on the white wall behind the stand, just above the pink and green dessert on the glass plate. The pixel stands out against the plain white background, making it relatively easy to spot.",
@@ -45,10 +45,10 @@
         160
       ],
       "guessed_position": [
-        158,
-        136
+        215,
+        144
       ],
-      "distance": 34.655446902326915
+      "distance": 83.54639429682169
     }
   ]
 }

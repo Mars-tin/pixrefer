@@ -1,0 +1,30 @@
+{
+  "image_path": "./example.jpg",
+  "image_dimensions": [
+    480,
+    640
+  ],
+  "pixel_data": [
+    {
+      "pixel_position": [
+        158,
+        270
+      ],
+      "description": "the left-bottom corner of the left most orange cup at the top brown plate"
+    },
+    {
+      "pixel_position": [
+        234,
+        60
+      ],
+      "description": "right next to the pudding at the top to its right"
+    },
+    {
+      "pixel_position": [
+        470,
+        535
+      ],
+      "description": "near the right edge of the figure, at the place with 5/6 of the height from the top"
+    }
+  ]
+}
