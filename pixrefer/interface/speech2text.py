@@ -415,13 +415,12 @@ def listen_print_loop(responses: Iterator[speech.StreamingRecognizeResponse]) ->
     return final_transcript
 
 
-def main() -> None:
+def main(api_key: str) -> None:
     """Transcribe speech from audio file."""
     # See http://g.co/cloud/speech/docs/languages
     # for a list of supported languages.
     language_code = 'en-US'  # a BCP-47 language tag
-    api_key_string = 'AIzaSyAByimMVGbj-ej7pAOfl9GTMfl63MW7zso'
-    client = speech.SpeechClient(client_options={'api_key': api_key_string})
+    client = speech.SpeechClient(client_options={'api_key': api_key})
     config = speech.RecognitionConfig(
         encoding=speech.RecognitionConfig.AudioEncoding.LINEAR16,
         sample_rate_hertz=RATE,
@@ -446,36 +445,6 @@ def main() -> None:
         # Now, put the transcription responses to use.
         listen_print_loop(responses)
 
-
-# Example: How to use SpeechTranscriber class
-def example_usage() -> str:
-    """Demonstrate how to use the SpeechTranscriber class.
-    
-    Returns:
-        The final transcription text.
-    """
-    api_key = 'AIzaSyAByimMVGbj-ej7pAOfl9GTMfl63MW7zso'
-    
-    # Create transcriber instance
-    transcriber = SpeechTranscriber(api_key=api_key)
-    
-    # Define callback functions
-    def on_interim(text: str) -> None:
-        print(f'Interim result: {text}\r', end='')
-        
-    def on_final(text: str) -> None:
-        print(f'\nFinal result: {text}')
-        
-    print('Starting speech recognition (say \'exit\' or \'quit\' to end)...')
-    
-    # Start listening
-    transcriber.start_listening(on_interim_result=on_interim, on_final_result=on_final)
-    
-    # Return final transcription text
-    final_text = transcriber.final_transcript
-    print(f'Complete transcription: {final_text}')
-    
-    return final_text
 
 
 if __name__ == '__main__':
