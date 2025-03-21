@@ -27,3 +27,10 @@ box:
     description8: "Provide the shortest possible description that still allows precise identification of the red-boxed object."  
     description9: "Describe the red-boxed object in minimal words while ensuring no confusion with other objects."  
     description10: "Use as few words as possible to describe the red-boxed object in a way that guarantees unique identification."  
+  non_unique:
+    description1: "Describe the red-boxed object."
+    description2: "Provide a description of the red-boxed object so that another person can recognize and identify that unique item."
+    description3: "Explain the features of the red-boxed object that make it stand out, so another person can find it."
+    description4: "Describe the red-boxed object so that someone else can pinpoint that exact object among others."
+    description5: "Explain the unique characteristics of the red-boxed object that make it distinct from other objects."
+    

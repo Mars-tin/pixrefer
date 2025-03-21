@@ -156,7 +156,7 @@ class GPTAnnotator:
                 # Prepare the result data
                 result = sample
                 result['gpt_description'] = description
-                
+                result['model_info'] = 'gpt-4o'
                 results.append(result)
                 
             except Exception as e:

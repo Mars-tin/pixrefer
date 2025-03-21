@@ -1,0 +1,35 @@
+system:
+  image_description: "Analyze the given image and describe <bbox> using precise spatial references, so that another person can accurately identify the same area"
+
+pixel:
+  description: "Analyze the given image and describe <bbox> using precise spatial references, so that another person can accurately identify the same pixel."
+
+box:
+  regular:
+    description1: "Describe the object in <bbox> in a way that allows another person to distinguish it from all other objects in the image."
+    description2: "Give a clear and specific description of the object in <bbox> so that another user can find it without hesitation."
+    description3: "Describe the object in <bbox>, so that another user can identify the object from other objects."
+    description4: "Describe the object in <bbox> in a way that allows another person to find that one specific object."
+    description5: "Provide a description of the object in <bbox> so that another person can recognize and identify that unique item."
+    description6: "Describe the object in <bbox> so that another person can pinpoint that exact object among others."
+    description7: "Explain the features of the object in <bbox> that make it stand out, so another person can find it."
+    description8: "Describe the object inside <bbox> so that someone else can locate that particular item with certainty."
+    description9: "Describe the object in <bbox> so that another person can find that one specific object."
+    description10: "Give a description of the object in <bbox> so that another user can identify the exact unique object."
+  concise:
+    description1: "Describe <bbox> using the fewest words while ensuring it can be uniquely identified."  
+    description2: "Give a minimal description that allows someone to find the exact object in <bbox>."  
+    description3: "Use the least words necessary to ensure <bbox> is unmistakably identifiable."  
+    description4: "Provide a short yet precise description so <bbox> can be uniquely located."  
+    description5: "Describe the object in <bbox> concisely, ensuring it is the only possible match."  
+    description6: "Identify <bbox> using the fewest words while making it uniquely findable."  
+    description7: "Give a brief but unambiguous description that guarantees <bbox> can be found."  
+    description8: "Provide the shortest possible description that still allows precise identification of <bbox>."  
+    description9: "Describe <bbox> in minimal words while ensuring no confusion with other objects."  
+    description10: "Use as few words as possible to describe <bbox> in a way that guarantees unique identification."  
+  non_unique:
+    description1: "Describe <bbox>."
+    description2: "Provide a description of <bbox> so that another person can recognize and identify that unique item."
+    description3: "Explain the features of <bbox> that make it stand out, so another person can find it."
+    description4: "Describe <bbox> so that someone else can pinpoint that exact object among others."
+    description5: "Explain the unique characteristics of <bbox> that make it distinct from other objects." 

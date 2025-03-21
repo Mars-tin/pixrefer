@@ -13,7 +13,7 @@ The pre-commit hooks will run automatically when you try to commit changes to th
 
 
 ## Quickstart
-**This task requires a GUI, so it is recommended that you run it on a Mac.
+**These tasks require a GUI, so it is recommended that you run it on a Mac / Windows.
 ### Clone git repo
 ```bash
 git clone https://github.com/Mars-tin/pixrefer.git
@@ -22,7 +22,7 @@ pip install -e .
 ```
 
 ### Install some packages
-Run the following code to install PyAudio on Mac:
+If you are using a Mac, run the following code to install PyAudio:
 ```bash
 brew install portaudio
 pip install pyaudio
@@ -46,6 +46,7 @@ touch .env
 ```
 And add the content below: 
 `GOOGLE_API_KEY={YOUR_API_KEY}`
+Please replace the key with the real api key provided.
 
 ### Launch the demo
 #### REL task
@@ -59,9 +60,14 @@ Replace the following path with your given data path. For example, you may need 
 --json_path Pixrefer_data/data/rel_user_input/llava_7b_concise_results.json  # replace the example gpt_4o file path here
 ```
 
-For each image, you are require to click where you think the object in the red box (you cannot see it) is located. 
-- If you find the multiple objects matches the description, click `Multiple Match` and confirm your guess.
-- If you cannot find such an object in the image, click `Cannot Tell Where The Object Is` and confirm your guess.
+For each image, you are required to click where you think the **unique** object in the red box (you cannot see it) is located. 
+![rel_regular](asset/rel_regular.gif)
+
+If you find multiple objects that match the description, click `Multiple Match` and confirm your guess.
+![rel_multiple_match](asset/rel_multiple_match.gif)
+
+If you cannot find such an object in the image, click `Cannot Tell Where The Object Is` and confirm your guess.
+![rel_nomatch](asset/rel_nomatch.gif)
 
 You can always use `Enter(Return)` on your keyboard to quickly confirm and go to the next image.
 
@@ -70,3 +76,17 @@ You can always use `Enter(Return)` on your keyboard to quickly confirm and go to
 ```bash
 bash pixrefer/interface/run_reg.sh
 ```
+
+For each image, you are required to give **at least one** description of the object in the red box to make it can be **uniquely identified** by another person.
+
+Write a text description:
+![reg_text](asset/reg_text.gif)
+After you finish, please click `Save Description` to save your result and you will see a green 'Text ✓'.
+
+Record an audio description:
+*Please note that you need to set the google api key in the `.env` file to proceed.*
+![reg_audio](asset/reg_audio.gif)
+
+Click `Audio` to switch to the audio mode, and click `Start Recording` to record. When you finish, click `Stop Recording`. You can edit the translation words, and click `Save Description` to save the edited result.
+
+You can always use `Enter(Return)` on your keyboard to quickly confirm and go to the next image.
