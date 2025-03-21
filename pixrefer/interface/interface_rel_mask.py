@@ -209,7 +209,7 @@ class MaskDescriptionEvaluator(BaseInterface):
         self.update_progress(self.current_position, self.total_images)
 
         # Update the description text using base class method
-        current_description = self.mask_data['gpt_description']
+        current_description = self.mask_data['description']
         self.update_text_display(current_description)
 
         # Reset current guess and comparison flag
