@@ -35,7 +35,8 @@ RECORD_SECONDS = 5
 WAVE_OUTPUT_FORMAT = '{}_mask_{}.wav'
 
 # Speech API key
-API_KEY = load_config(config_name='api.google.key')
+config = load_config()
+API_KEY = config.get('api', {}).get('google', {}).get('key', None)
 
 # Input modes
 MODE_TEXT = 'text'
@@ -158,7 +159,7 @@ class MaskRegionDescriptionCollector(BaseInterface):
         # Add instruction label
         self.instruction_label = ttk.Label(
             self.control_frame,
-            text='Please describe the highlighted object in the red box so it can be uniquely identified.',
+            text='Please describe the object in the red box, making it unique and recognizable. You can choose to provide a text description or record an audio description (either one is fine).',
             font=('Arial', 12),
             wraplength=400  # Set a default value, will be updated based on actual control panel width
         )
@@ -252,7 +253,7 @@ class MaskRegionDescriptionCollector(BaseInterface):
 
         # Update status bar text
         self.status_bar.configure(
-            text='Please describe the highlighted object in the red box.',
+            text='Please describe the object in the red box. You can choose to provide a text description or record an audio description (either one is fine).',
             wraplength=400  # Set a default value, will be updated based on actual control panel width
         )
         
@@ -365,7 +366,7 @@ class MaskRegionDescriptionCollector(BaseInterface):
         else:
             self.has_audio_label.pack_forget()
         
-        # 更新提交按钮状态
+        # Update submit button state
         self._update_submit_button_state()
 
     def toggle_recording(self) -> None:
@@ -483,7 +484,7 @@ class MaskRegionDescriptionCollector(BaseInterface):
                 # Update status bar, clearly indicating text has been automatically saved
                 if hasattr(self, 'status_bar') and self.root.winfo_exists():
                     self.status_bar.configure(
-                        text=f'Audio recording saved to {audio_filename}. Transcription text has been automatically saved. You can edit the transcription and click "Save Description" to update the saved description.'
+                        text=f'Audio saved to {audio_filename}. Transcription text has been automatically saved. You can edit the transcription and click "Save Description" to update, or click "Next Image" to continue.'
                     )
             else:
                 logger.info(f'Audio recording saved to {audio_path}, but UI is no longer available.')
@@ -665,32 +666,20 @@ class MaskRegionDescriptionCollector(BaseInterface):
                 # Save description based on current input mode
                 self.save_current_description()
             
-            # Check if both text and audio descriptions exist
+            # Check if either text or audio descriptions exist
             has_text = (self.current_index < len(self.text_descriptions) and 
                        self.text_descriptions[self.current_index])
             has_audio = (self.current_index < len(self.audio_descriptions) and 
                         self.audio_descriptions[self.current_index])
             
-            # Must complete both text and audio descriptions to continue
-            if not has_text:
+            # Only need to complete either text or audio descriptions to continue
+            if not has_text and not has_audio:
                 self.status_bar.configure(
-                    text='You must provide a text description to continue. Please switch to "Text" mode and add a description.'
+                    text='You need to provide at least one description (text or audio) to continue.'
                 )
-                # Switch to text mode to allow user input
-                if self.current_input_mode != MODE_TEXT:
-                    self.switch_input_mode(MODE_TEXT)
-                return
-                
-            if not has_audio:
-                self.status_bar.configure(
-                    text='You must provide an audio description to continue. Please switch to "Audio" mode and record a description.'
-                )
-                # Switch to audio mode to allow user recording
-                if self.current_input_mode != MODE_AUDIO:
-                    self.switch_input_mode(MODE_AUDIO)
                 return
             
-            # Both descriptions are completed, save results
+            # At least one description is completed, save results
             self._save_result()
             
             # Proceed to next image directly
@@ -822,31 +811,38 @@ class MaskRegionDescriptionCollector(BaseInterface):
 
     def _update_submit_button_state(self) -> None:
         """Update the submit button state based on the current index and descriptions."""
-        # Check if both text and audio descriptions exist
+        # Check if either text or audio descriptions exist
         has_text = (self.current_index < len(self.text_descriptions) and 
                    self.text_descriptions[self.current_index])
         has_audio = (self.current_index < len(self.audio_descriptions) and 
                     self.audio_descriptions[self.current_index])
         
-        # Only enable button when both descriptions exist
-        if has_text and has_audio:
+        # Enable button when either description exists
+        if has_text or has_audio:
             self.submit_button.configure(state=tk.NORMAL)
             # Update button text to indicate that next image can be continued
             self.submit_button.configure(text='Next Image (Enter)')
             # Update status bar
-            self.status_bar.configure(
-                text='Both text and audio descriptions are completed, you can proceed to the next image.'
-            )
+            if has_text and has_audio:
+                self.status_bar.configure(
+                    text='Both text and audio descriptions are completed. You can proceed to the next image.'
+                )
+            elif has_text:
+                self.status_bar.configure(
+                    text='Text description is completed. You can proceed to the next image (or add an audio description).'
+                )
+            else:
+                self.status_bar.configure(
+                    text='Audio description is completed. You can proceed to the next image (or add a text description).'
+                )
         else:
             self.submit_button.configure(state=tk.DISABLED)
-            # Update button text to indicate the tasks that need to be completed
-            missing = []
-            if not has_text:
-                missing.append("Text")
-            if not has_audio:
-                missing.append("Audio")
-            missing_str = " and ".join(missing)
-            self.submit_button.configure(text=f'Please complete {missing_str} description before proceeding.')
+            # Update button text to indicate that a description is needed
+            self.submit_button.configure(text='Please add at least one description (text or audio) before proceeding.')
+            # Update status bar
+            self.status_bar.configure(
+                text='Please provide at least one description (text or audio) before proceeding.'
+            )
 
     def update_text_wrapping(self) -> None:
         """Update text widget wrapping settings based on current control panel width."""
