@@ -1,6 +1,9 @@
 # PixRefer
 
 ## Precommit Setup
+**This is for the author, you can skip this step.**
+
+
 We use Google docstring format for our docstrings and the pre-commit library to check our code. To install pre-commit, run the following command:
 
 ```bash
@@ -96,7 +99,9 @@ Write a text description:
 After you finish, please click `Save Description` to save your result and you will see a green 'Text ✓'.
 
 Record an audio description:
+
 *Please note that you need to set the google api key in the `.env` file to proceed.*
+
 <div style="text-align: center;">
   <img src="asset/reg_audio.gif" alt="reg_audio" width="70%" />
 </div>
