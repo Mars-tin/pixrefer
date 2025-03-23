@@ -670,6 +670,9 @@ class BatchEvaluator:
         
         # Create output directory if it doesn't exist
         ensure_dir_exists(output_dir)
+
+        # 添加标志，用于控制是否继续处理
+        self.should_continue = True
         
     def _find_starting_index(self) -> int:
         """Find the index from which to start annotation.
@@ -720,67 +723,63 @@ class BatchEvaluator:
             return
             
         logger.info(f'Starting from image {self.current_index + 1} / {self.total_samples}')
-        self._process_next_item()
+        # self._process_next_item()
+        self._process_all_items()
         
-    def _process_next_item(self) -> None:
-        """Process the next data item in the list."""
-        if self.current_index >= len(self.data_items):  
-            logger.info(f'All {self.current_index} samples have been processed. Evaluation complete.')
-            return
-            
-        try:
-            # Get the current data item
-            data_item = self.data_items[self.current_index]
-            
-            # Get image path from data or construct it
-            if 'image_path' in data_item and os.path.exists(data_item['image_path']):
-                image_path = data_item['image_path']
-            else:
-                # Fallback to constructing path from image_id
-                image_id = data_item.get('image_id')
-                if not image_id:
-                    logger.error(f'Processing item {self.current_index} has no image_id field')
-                    self.current_index += 1
-                    self._process_next_item()
-                    return
-                image_path = os.path.join(self.image_dir, f'{image_id}.jpg')
-            
-            # Determine the actual image path - check if exists
-            if not os.path.exists(image_path):
-                logger.error(f'Image not found: {os.path.abspath(image_path)}')
-                self.current_index += 1
-                self._process_next_item()
-                return
+    def _process_all_items(self) -> None:
+        """Process all data items in the list."""
+        while self.current_index < len(self.data_items) and self.should_continue:
+            try:
+                # Get the current data item
+                data_item = self.data_items[self.current_index]
                 
-            logger.info(f'Processing file {self.current_index + 1}/{self.total_samples}: {data_item.get("image_id", "unknown")}')
-            logger.info(f'Image path: {image_path}')
+                # Get image path from data or construct it      
+                if 'image_path' in data_item and os.path.exists(data_item['image_path']):
+                    image_path = data_item['image_path']
+                else:
+                    # Fallback to constructing path from image_id
+                    image_id = data_item.get('image_id')
+                    if not image_id:
+                        logger.error(f'Processing item {self.current_index} has no image_id field')
+                        # Terminate the entire process when an error occurs instead of moving to the next image
+                        self.should_continue = False
+                        return
+                    image_path = os.path.join(self.image_dir, f'{image_id}.jpg')        
+                
+                logger.info(f'Processing file {self.current_index + 1}/{self.total_samples}: {data_item.get("image_id", "unknown")}')
+                logger.info(f'Image path: {image_path}')
 
-            # Create a temporary root window for non-initial items
-            if self.current_index > 0:
-                temp_root = tk.Tk()
-                temp_root.destroy()
+                # Create a temporary root window for non-initial items
+                if self.current_index > 0:
+                    temp_root = tk.Tk()
+                    temp_root.destroy()
+                    
+                # Create a new MaskDescriptionEvaluator instance with position information
+                app = MaskDescriptionEvaluator(
+                    image_path=image_path,
+                    json_path=self.json_path,
+                    mask_data=data_item,
+                    mask_dir=self.mask_dir,
+                    output_dir=self.output_dir,
+                    on_complete_callback=self._on_evaluation_complete,
+                    current_position=self.current_index + 1,  # Current position (1-based)
+                    total_images=self.total_samples  # Total number of images
+                )
+            
+                # Run the application, this will block until the window is closed
+                app.run()
                 
-            # Create a new MaskDescriptionEvaluator instance with position information
-            app = MaskDescriptionEvaluator(
-                image_path=image_path,
-                json_path=self.json_path,
-                mask_data=data_item,
-                mask_dir=self.mask_dir,
-                output_dir=self.output_dir,
-                on_complete_callback=self._on_evaluation_complete,
-                current_position=self.current_index + 1,  # Current position (1-based)
-                total_images=self.total_samples  # Total number of images
-            )
+                if not self.should_continue:
+                    break
             
-            # Run the application, this will block until the window is closed
-            app.run()
-            
-        except Exception as e:
-            logger.error(f'Error processing item {self.current_index}: {e}')
-            logger.error(traceback.format_exc())
-            self.current_index += 1
-            self._process_next_item()
-            
+            except Exception as e:
+                logger.error(f'Error processing item {self.current_index}: {e}')
+                logger.error(traceback.format_exc())
+                # Terminate the entire process when an error occurs instead of moving to the next image
+                messagebox.showerror("Error", f"An error occurred while processing image {self.current_index + 1}:\n{str(e)}\n\nThe program will terminate.")
+                self.should_continue = False
+                return
+
     def _on_evaluation_complete(self, cancelled: bool = False) -> None:
         """Called when an evaluation is complete.
         
@@ -790,17 +789,21 @@ class BatchEvaluator:
         # If user cancelled, don't process more items
         if cancelled:
             logger.info('User has cancelled the evaluation process.')
+            self.should_continue = False
             return
             
         # Increment index
         self.current_index += 1
         
-        # Process the next item
-        if self.current_index < len(self.data_items):
-            # Process the next item directly
-            self._process_next_item()
-        else:
-            logger.info(f'All {self.current_index} samples processed. Evaluation complete.')
+        # Set flag to continue processing next item
+        self.should_continue = True
+        
+        # # Process the next item
+        # if self.current_index < len(self.data_items):
+        #     # Process the next item directly
+        #     self._process_next_item()
+        # else:
+        #     logger.info(f'All {self.current_index} samples processed. Evaluation complete.')
 
 
 def main() -> None:

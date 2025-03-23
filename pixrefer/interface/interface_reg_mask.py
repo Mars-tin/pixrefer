@@ -15,6 +15,7 @@ import wave
 import traceback
 import time
 import pyaudio
+import sys
 from tkinter import messagebox, scrolledtext, ttk
 from typing import Any, Dict, List, Optional
 from PIL import Image, ImageTk
@@ -493,7 +494,7 @@ class MaskRegionDescriptionCollector(BaseInterface):
             if self.root.winfo_exists():
                 self._update_description_state_indicators()
                 
-                # 更新提交按钮状态
+                # Update submit button state
                 self._update_submit_button_state()
         else:
             if hasattr(self, 'status_bar') and self.root.winfo_exists():
@@ -907,6 +908,9 @@ class BatchCollector:
         self.current_index = self._find_starting_index()
         self.total_samples = len(self.samples)
         
+        # 添加标志，用于控制是否继续处理
+        self.should_continue = True
+        
     def _load_samples(self) -> List[Dict[str, Any]]:
         """Load samples from the JSON file.
         
@@ -960,47 +964,54 @@ class BatchCollector:
             return
             
         logger.info(f'Starting from mask {self.current_index + 1} of {self.total_samples}')
-        self._process_next_item()
         
-    def _process_next_item(self) -> None:
-        """Process the next sample in the list."""
-        if self.current_index >= len(self.samples):
-            logger.info(f'All {self.current_index} masks processed. Collection complete!')
-            return
-            
-        try:
-            # Get the current sample
-            sample = self.samples[self.current_index]
-            mask_path = sample["mask_path"]
-            masks = [mask_path]
-            
-            logger.info(f'Processing mask {self.current_index + 1}/{self.total_samples}: {mask_path}')
-            
-            # Destroy the temporary root window if it exists
-            if self.current_index > 0:
-                temp_root = tk.Tk()
-                temp_root.destroy()
+        # 使用迭代而非递归处理图片
+        self._process_all_items()
+        
+    def _process_all_items(self) -> None:
+        """Process all images using iteration instead of recursive calls"""
+        while self.current_index < len(self.samples) and self.should_continue:
+            try:
+                # Get current sample
+                sample = self.samples[self.current_index]
+                mask_path = sample["mask_path"]
+                masks = [mask_path]
                 
-            # Create a new collector instance with position information in the title
-            app = MaskRegionDescriptionCollector(
-                current_sample=sample,  # Pass the current sample
-                masks=masks,  # Pass mask data as a list
-                output_json_dir=self.output_json_dir,
-                output_audio_dir=self.output_audio_dir,
-                image_dir=self.image_dir,
-                on_complete_callback=self._on_collection_complete,
-                current_position=self.current_index + 1,  # Current position
-                total_images=self.total_samples,  # Total number of images
-            )
-            
-            # Run the application, this will block until the window is closed
-            app.run()
-            
-        except Exception as e:
-            logger.error(f'Error processing item {self.current_index}: {e}')
-            logger.error(traceback.format_exc())
-            self.current_index += 1
-            self._process_next_item()
+                logger.info(f'Processing mask {self.current_index + 1}/{self.total_samples}: {mask_path}')
+                
+                # Create new temporary root window each iteration
+                if self.current_index > 0:
+                    temp_root = tk.Tk()
+                    temp_root.destroy()
+                    
+                # Create collector instance
+                app = MaskRegionDescriptionCollector(
+                    current_sample=sample,  # Pass current sample
+                    masks=masks,  # Pass mask data
+                    output_json_dir=self.output_json_dir,
+                    output_audio_dir=self.output_audio_dir,
+                    image_dir=self.image_dir,
+                    on_complete_callback=self._on_collection_complete,  # Use same callback, but not recursive
+                    current_position=self.current_index + 1,  # Current position
+                    total_images=self.total_samples,  # Total number of images
+                )
+                
+                # Run application, which will block until window is closed
+                app.run()
+                
+                # Check if we should continue (set by callback function)
+                if not self.should_continue:
+                    break
+                    
+            except Exception as e:
+                logger.error(f'Error processing item {self.current_index}: {e}')
+                logger.error(traceback.format_exc())
+                # Terminate the entire process when an error occurs instead of moving to the next image
+                messagebox.showerror("Error", f"An error occurred while processing image {self.current_index + 1}:\n{str(e)}\n\nThe program will terminate.")
+                self.should_continue = False
+                return
+        
+        logger.info(f'All {self.current_index} masks processed. Collection complete!')
             
     def _on_collection_complete(self, cancelled=False) -> None:
         """Called when a collection is complete.
@@ -1011,17 +1022,14 @@ class BatchCollector:
         # If user cancelled, don't process more items
         if cancelled:
             logger.info("User has cancelled the collection process.")
+            self.should_continue = False
             return
             
         # Increment index
         self.current_index += 1
         
-        # Process the next item
-        if self.current_index < len(self.samples):
-            # Process the next item directly
-            self._process_next_item()
-        else:
-            logger.info(f'All {self.current_index} samples processed. Collection complete!')
+        # Set flag to continue processing next item
+        self.should_continue = True
 
 
 def main() -> None:
@@ -1030,6 +1038,8 @@ def main() -> None:
     Handles argument parsing and initializes the appropriate collector based on
     the provided parameters.
     """
+    sys.setrecursionlimit(5000) 
+    
     # Create argument parser
     parser = argparse.ArgumentParser(description='Collect descriptions of object regions in images.')
     
