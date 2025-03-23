@@ -136,16 +136,16 @@ class MaskDescriptionEvaluator(BaseInterface):
         self.special_button_frame = ttk.Frame(self.control_frame)
         self.special_button_frame.pack(fill=tk.X, pady=5)
         
-        # Add "cannot tell" and "multiple match" buttons
+        # Create "Cannot Tell" button with keyboard hint (1)
         self.cannot_tell_button = ttk.Button(
             self.special_button_frame,
-            text='Cannot Tell Where The Object Is',
+            text='Cannot Tell Where The Object Is (1)',
             command=self.handle_cannot_tell
         )
-        
+        # Create "Multiple Match" button with keyboard hint (2)
         self.multiple_match_button = ttk.Button(
             self.special_button_frame,
-            text='Multiple Match',
+            text='Multiple Match (2)',
             command=self.handle_multiple_match
         )
         
@@ -157,6 +157,12 @@ class MaskDescriptionEvaluator(BaseInterface):
             self.cannot_tell_button.pack(side=tk.LEFT, padx=(0, 5), fill=tk.X, expand=True)
             self.multiple_match_button.pack(side=tk.RIGHT, padx=(5, 0), fill=tk.X, expand=True)
         
+        # Bind keyboard shortcuts
+        # self.root.bind('<Return>', lambda event: self.handle_enter_key())
+        self.root.bind('<space>', lambda event: self.handle_enter_key())
+        self.root.bind('1', lambda event: self.handle_cannot_tell())
+        self.root.bind('2', lambda event: self.handle_multiple_match())
+
         # Add zoom controls using base class method
         self._add_zoom_controls()
 
