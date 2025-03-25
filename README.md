@@ -39,7 +39,38 @@ pip install google-cloud-speech
 ### Download the data
 ```bash
 git lfs install
+```
+
+#### For REL and REG tasks
+```bash
 git clone https://huggingface.co/datasets/Seed42Lab/Pixrefer_data
+```
+
+If you have already download the data above and want to download the pragmatics preference data:
+```bash
+cd Pixrefer_data
+mkdir pragmatic
+git worktree add pragmatic pragmatics_preference
+cd -
+```
+
+If you want to renew the data:
+```bash 
+cd Pixrefer_data
+git pull origin main
+cd -
+```
+
+#### For pragmatics preference task only
+```bash
+git clone -b pragmatics_preference https://huggingface.co/datasets/Seed42Lab/Pixrefer_data
+```
+
+If you want to renew the data:
+```bash
+cd Pixrefer_data/pragmatic
+git pull origin pragmatics_preference
+cd -
 ```
 
 ### Prepare the google key
@@ -109,3 +140,22 @@ Record an audio description:
 Click `Audio` to switch to the audio mode, and click `Start Recording` to record. When you finish, click `Stop Recording`. You can edit the translation words, and click `Save Description` to save the edited result.
 
 You can always use `Enter(Return)` on your keyboard to quickly confirm and go to the next image.
+
+
+#### Pragmatics Preference
+```bash
+bash pixrefer/interface/run_pragmatic.sh
+```
+**Please note you need to change the JSON file path in this file first**: [run_rel.sh](pixrefer/interface/run_pragmatic.sh)
+
+Replace the following path with your given data path. For example, you may need to annotate the `user_6_allocation.json`:
+```bash
+--json_path Pixrefer_data/pragmatic/user_input/user_6_allocation.json  # replace the example user_1 file path here
+```
+
+For the task, select one of the following options to describe the object pointed by the arrow compared to the other one in the image. 
+
+Please note: 
+- Follow your first instinct.
+- The options change orders for each image.
+- The maximum number of images that can be annotated at a time is **25**. Once this limit is reached, please take a break for **at least 10 minutes** before continuing.
