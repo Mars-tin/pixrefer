@@ -6,6 +6,7 @@
 # Data files
 data/
 output/
+Pixrefer_data/
 
 # Development software files
 .vscode/
